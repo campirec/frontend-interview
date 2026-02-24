@@ -77,6 +77,54 @@ counter.getCount()  // 2
 闭包会持有对外部变量的引用，可能导致内存无法释放。
 现代引擎（V8）会做优化：只保留闭包实际引用的变量，未引用的会被 GC。
 
+## 面试题复盘：闭包（第 3 题）
+
+### 一句话定义
+
+闭包是“函数 + 其定义时所在的词法环境”，函数在外部执行时仍可访问外层变量。
+
+### 高频用途
+
+1. 数据私有化（模块私有状态、计数器）
+2. 函数工厂（根据参数生成定制函数）
+
+### 内存滞留的常见场景
+
+1. 事件监听器闭包长期持有大对象或 DOM 引用
+2. `setInterval` 等长生命周期回调未清理
+3. 全局缓存（数组/Map）保存函数，函数又引用大对象
+
+### 排查与修复
+
+- 排查：DevTools Memory 的 Heap Snapshot + Retainers，重点看 `Closure` 与 Detached DOM 链路
+- 修复：`removeEventListener`、`clearInterval`、缩小捕获对象范围、必要时断开引用（置 `null`）
+
+### var 循环异步陷阱
+
+`for (var i = 0; i < 3; i++)` 只有一个函数级绑定，异步回调执行时拿到的是同一个最终值。
+
+除了 `let`，还可用以下写法：
+
+```js
+for (var i = 0; i < 3; i++) {
+  (function (j) {
+    setTimeout(() => console.log(j), 0)
+  })(i)
+}
+```
+
+```js
+for (var i = 0; i < 3; i++) {
+  setTimeout(console.log, 0, i)
+}
+```
+
+```js
+[0, 1, 2].forEach((i) => {
+  setTimeout(() => console.log(i), 0)
+})
+```
+
 ## 变量提升（Hoisting）
 
 ```js
