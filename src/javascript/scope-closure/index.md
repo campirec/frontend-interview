@@ -20,6 +20,15 @@ for (let i = 0; i < 3; i++) {
   setTimeout(() => console.log(i), 0) // 0 1 2
 }
 // let 在每次循环迭代中创建新的绑定
+
+// ❌ const 不能用于普通 for 循环
+// for (const i = 0; i < 3; i++) {} // TypeError: Assignment to constant variable
+// 原因：i++ 是赋值操作，const 不允许重新赋值
+
+// ✅ const 可以用于 for...of / for...in
+for (const item of [0, 1, 2]) { console.log(item) } // 0 1 2
+// 原因：每轮迭代是从迭代器取出新值绑定到全新的变量，不存在修改操作
+// for 循环的 i++ 是"修改旧变量"，for...of 是"创建新变量"
 ```
 
 ## 作用域链

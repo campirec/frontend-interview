@@ -76,3 +76,30 @@ const obj = {
 - **DOM 事件处理器**：`this` 指向绑定事件的元素（箭头函数除外）
 - **class 中的方法**：默认不绑定，传递后会丢失（常用箭头函数属性或 bind 解决）
 - **链式调用**：方法返回 `this` 实现链式调用
+
+## 严格模式与 ESM 的影响
+
+ESM 模块（`"type": "module"`）默认运行在严格模式下，默认绑定的 `this` 是 `undefined` 而非 `globalThis`：
+
+```js
+// CommonJS 或非严格模式
+function foo() { console.log(this) }
+foo() // globalThis (window / global)
+
+// ESM 或严格模式
+function foo() { console.log(this) }
+foo() // undefined — 独立调用时 this 不再指向全局对象
+
+// 实际影响：
+const obj = {
+  name: 'Alice',
+  greet() {
+    return function() { return this.name }
+  }
+}
+const fn = obj.greet()
+fn() // 非严格模式：undefined（window.name 不存在）
+     // 严格模式/ESM：TypeError（Cannot read properties of undefined）
+```
+
+面试中提到严格模式对 `this` 的影响会加分。
