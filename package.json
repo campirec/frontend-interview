@@ -1,0 +1,14 @@
+{
+  "name": "frontend-interview",
+  "version": "1.0.0",
+  "description": "前端知识体系梳理与面试题集",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": ["frontend", "interview", "javascript"],
+  "author": "chenjian",
+  "license": "MIT",
+  "packageManager": "pnpm@10.15.0"
+}
