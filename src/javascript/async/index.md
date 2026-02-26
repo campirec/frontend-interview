@@ -18,6 +18,117 @@
 - 构造函数中的代码同步执行，`.then()` 回调是微任务
 - `.then()` 的回调返回值会被 `Promise.resolve()` 包装
 
+### then 链式调用原理
+
+```js
+Promise.resolve(1)
+  .then(val => val + 1)  // 返回新的 Promise，值为 2
+  .then(val => console.log(val)) // 输出 2
+  .then(val => console.log(val)) // 输出 undefined（上一个 then 没有返回值）
+```
+
+**关键点**：每个 `.then()` 都创建新的 Promise，上一个回调的返回值传递给下一个。没有 `return` 默认返回 `undefined`。
+
+### 值穿透与自动解包
+
+```js
+Promise.resolve(Promise.resolve(Promise.resolve(1)))
+  .then(val => console.log(val)) // 输出 1
+```
+
+Promise 会**递归解包**，无论嵌套多少层 Promise，最终拿到最里面的值。
+
+---
+
+### 错误处理
+
+#### then(onFulfilled, onRejected)
+
+```js
+Promise.resolve(1)
+  .then(
+    val => { throw new Error('fail') },
+    err => console.log('不会执行') // 只有前置 Promise rejected 才执行
+  )
+  .then(
+    val => console.log('不执行'), // 前置 rejected，跳过
+    err => console.log(err.message) // 'fail'
+  )
+```
+
+**关键**：`.then` 的两个参数是**互斥**的，前置 Promise fulfilled 走第一个，rejected 走第二个。
+
+#### catch vs then(null, onRejected)
+
+```js
+// .then(null, onRejected) 只捕获直接前驱的错误
+Promise.resolve()
+  .then(() => { throw new Error('1') })
+  .then(null, (err) => console.log('A:', err.message)) // 捕获 error1
+  .then(() => { throw new Error('2') })
+  .catch((err) => console.log('B:', err.message)) // 捕获 error2
+
+// 去掉中间的 .then(null, ...)
+Promise.resolve()
+  .then(() => { throw new Error('1') })
+  .then(() => { throw new Error('2') }) // 跳过
+  .catch((err) => console.log('C:', err.message)) // 只捕获 error1
+```
+
+**区别**：
+- `.then(null, onRejected)` 只捕获**直接前驱**的错误
+- `.catch()` 会捕获**链上第一个未被捕获**的错误
+
+#### 错误恢复机制
+
+```js
+Promise.resolve()
+  .then(() => { throw new Error('fail') })
+  .catch(err => {
+    console.log(err.message) // 'fail'
+    return 'recovered' // 正常返回，不抛错
+  })
+  .then(val => console.log(val)) // 'recovered' — 继续执行
+```
+
+**关键**：错误被捕获且处理函数正常执行完（没再抛错），状态就"恢复"为 fulfilled，后续链继续执行。
+
+---
+
+### 并发控制原理
+
+实现"最多同时执行 N 个任务"的核心思路：
+
+```js
+async function asyncPool(limit, items, fn) {
+  const executing = new Set() // 正在执行的任务
+
+  for (const item of items) {
+    const p = fn(item)
+    executing.add(p)
+
+    const clean = () => executing.delete(p)
+    p.then(clean, clean) // 完成后从集合移除
+
+    if (executing.size >= limit) {
+      await Promise.race(executing) // 等待任意一个完成
+    }
+  }
+
+  return Promise.all(items) // 等待所有完成
+}
+```
+
+**关键点**：
+- `executing` Set 维护当前执行中的任务
+- 一个任务完成后立即从 Set 移除，触发 `Promise.race` 解除等待
+- 下一轮循环检查 Set 大小，小于 limit 则补充新任务
+- "一个完成，立即补入"，而非"整批完成，再补下一批"
+
+---
+
+### 静态方法
+
 ### 静态方法
 
 ```js
