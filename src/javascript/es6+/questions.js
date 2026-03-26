@@ -232,10 +232,89 @@ function question5() {
   console.log(head, tail) // 1 [2, 3, 4]
 }
 
+// ============================================
+// 题目 6：Map/Set 高频操作 + structuredClone 深拷贝
+// ============================================
+function question6() {
+  console.log('--- Question 6 ---')
+
+  // --- Part 1: Map/Set 实战 ---
+
+  // 数组去重
+  const arr = [1, 2, 3, 2, 1, 4, 3, 5]
+  const unique = [...new Set(arr)]
+  console.log(unique) // [1, 2, 3, 4, 5]
+
+  // 数组交集 / 并集 / 差集
+  const a = new Set([1, 2, 3, 4])
+  const b = new Set([3, 4, 5, 6])
+
+  const intersection = [...a].filter(x => b.has(x))
+  const union = [...new Set([...a, ...b])]
+  const difference = [...a].filter(x => !b.has(x))
+
+  console.log('交集:', intersection) // [3, 4]
+  console.log('并集:', union)        // [1, 2, 3, 4, 5, 6]
+  console.log('差集:', difference)   // [1, 2]
+
+  // Map 实现 groupBy（兼容写法）
+  const items = [
+    { name: 'apple', type: 'fruit' },
+    { name: 'carrot', type: 'vegetable' },
+    { name: 'banana', type: 'fruit' },
+    { name: 'spinach', type: 'vegetable' },
+  ]
+
+  function groupBy(arr, keyFn) {
+    const map = new Map()
+    for (const item of arr) {
+      const key = keyFn(item)
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(item)
+    }
+    return map
+  }
+
+  const grouped = groupBy(items, item => item.type)
+  console.log(grouped.get('fruit'))     // [{name:'apple',...}, {name:'banana',...}]
+  console.log(grouped.get('vegetable')) // [{name:'carrot',...}, {name:'spinach',...}]
+
+  // --- Part 2: structuredClone vs JSON 深拷贝 ---
+
+  const original = {
+    date: new Date('2024-01-01'),
+    regex: /hello/gi,
+    map: new Map([['key', 'value']]),
+    set: new Set([1, 2, 3]),
+    undef: undefined,
+    nested: { arr: [1, [2, 3]] },
+  }
+
+  // JSON 方式 — 丢失类型信息
+  const jsonClone = JSON.parse(JSON.stringify(original))
+  console.log(jsonClone.date instanceof Date)  // false（变成字符串）
+  console.log(jsonClone.regex)                 // {}（丢失）
+  console.log(jsonClone.map)                   // {}（丢失）
+  console.log(jsonClone.undef)                 // undefined（键被删除）
+
+  // structuredClone — 保持类型
+  const deepClone = structuredClone(original)
+  console.log(deepClone.date instanceof Date)  // true
+  console.log(deepClone.regex)                 // /hello/gi
+  console.log(deepClone.map.get('key'))        // 'value'
+  console.log(deepClone.set.has(2))            // true
+
+  // 修改克隆不影响原对象
+  deepClone.nested.arr[1].push(4)
+  console.log(original.nested.arr[1]) // [2, 3]
+  console.log(deepClone.nested.arr[1]) // [2, 3, 4]
+}
+
 // question1()
 // question2()
 // question3()
 // question4()
 // question5()
+// question6()
 
-export { question1, question2, question3, question4, question5 }
+export { question1, question2, question3, question4, question5, question6 }

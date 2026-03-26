@@ -110,3 +110,86 @@ class Child extends Parent {
 - `Object.create(null)` 创建的对象没有原型，不继承任何属性和方法
 - `Function.__proto__ === Function.prototype`（Function 是自己的实例）
 - `Object.__proto__ === Function.prototype`（Object 也是函数）
+
+## 面试题复盘：new vs Object.create
+
+### 题目
+
+```js
+function Person(name) {
+  this.name = name
+}
+
+Person.prototype.sayHello = function() {
+  return `Hello, I'm ${this.name}`
+}
+
+const p1 = new Person('Alice')
+const p2 = Object.create(Person.prototype)
+p2.name = 'Bob'
+
+console.log(p1.sayHello())                      // ?
+console.log(p2.sayHello())                      // ?
+console.log(p1.constructor === Person)         // ?
+console.log(p2.constructor === Person)         // ?
+console.log(p1 instanceof Person)              // ?
+console.log(p2 instanceof Person)              // ?
+console.log(Object.getPrototypeOf(p1) === Person.prototype)  // ?
+console.log(Object.getPrototypeOf(p2) === Person.prototype)  // ?
+console.log(p1.hasOwnProperty('name'))         // ?
+console.log(p2.hasOwnProperty('name'))         // ?
+```
+
+### 输出
+
+```
+"Hello, I'm Alice"
+"Hello, I'm Bob"
+true
+true   ← 易错：很多人以为是 false
+true
+true
+true
+true
+true
+true  ← 易错：很多人以为是 false
+```
+
+### 核心要点
+
+**`new` vs `Object.create()`**
+
+```js
+// new 做了什么：
+const p1 = Object.create(Person.prototype)
+Person.call(p1, 'Alice')
+
+// Object.create() 只做了：
+const p2 = Object.create(Person.prototype)
+// 不会调用构造函数，this.name 不会自动设置
+```
+
+**`p2.constructor === Person` 为什么是 true？**
+
+```
+p2 自身没有 constructor 属性
+  ↓
+沿原型链查找 p2.__proto__ === Person.prototype
+  ↓
+Person.prototype.constructor === Person（默认由构造函数创建时设置）
+  ↓
+p2.constructor 沿原型链找到 Person
+```
+
+**`p2.hasOwnProperty('name')` 为什么是 true？**
+
+```js
+p2.name = 'Bob'  // 直接赋值创建 own property
+```
+
+`hasOwnProperty` 判断的是**属性是否直接存在于对象自身**，与属性是如何设置的无关：
+- 构造函数设置的 `this.name` → own property ✓
+- 直接赋值 `obj.name` → own property ✓
+- 原型上的属性 → own property ✗
+
+**记忆口诀**：`Object.create()` 只指定原型，不执行构造函数。`constructor` 和 `hasOwnProperty` 都按原型链和自身属性规则查找，与对象创建方式无关。

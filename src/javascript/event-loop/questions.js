@@ -146,6 +146,49 @@ function question5() {
 // 微任务：done
 
 // ============================================
+// 题目 6：Node.js 事件循环 - nextTick / setTimeout / setImmediate
+// ============================================
+function question6() {
+  console.log('--- Question 6 ---')
+  // 注意：此题需在 Node.js 环境运行
+
+  console.log('1')
+
+  setTimeout(() => {
+    console.log('2 - setTimeout')
+    Promise.resolve().then(() => console.log('3 - promise in setTimeout'))
+    process.nextTick(() => console.log('4 - nextTick in setTimeout'))
+  }, 0)
+
+  setImmediate(() => {
+    console.log('5 - setImmediate')
+    Promise.resolve().then(() => console.log('6 - promise in setImmediate'))
+  })
+
+  process.nextTick(() => {
+    console.log('7 - nextTick')
+    process.nextTick(() => console.log('8 - nested nextTick'))
+  })
+
+  Promise.resolve().then(() => {
+    console.log('9 - promise')
+  })
+
+  console.log('10')
+}
+// 输出：1 10 7 8 9 → (setTimeout 或 setImmediate 先后不确定)
+// 确定部分解析：
+// 同步：1 → 10
+// 微任务（nextTick 优先于 Promise）：7 → 8 → 9
+// setTimeout 回调内部：2 → 4（nextTick 优先）→ 3
+// setImmediate 回调内部：5 → 6
+//
+// 关键点：
+// 1. process.nextTick 总是优先于 Promise 微任务
+// 2. 主模块中 setTimeout(0) 与 setImmediate 顺序不确定
+// 3. 每个阶段回调执行完后，都会先清空 nextTick 队列再清空 Promise 队列
+
+// ============================================
 // 运行所有题目
 // ============================================
 async function runAll() {
@@ -158,6 +201,8 @@ async function runAll() {
   question4()
   await delay(100)
   question5()
+  await delay(100)
+  question6()
 }
 
 function delay(ms) {
@@ -170,6 +215,7 @@ function delay(ms) {
 // question3()
 // question4()
 // question5()
+// question6()
 // runAll()
 
-export { question1, question2, question3, question4, question5, runAll }
+export { question1, question2, question3, question4, question5, question6, runAll }

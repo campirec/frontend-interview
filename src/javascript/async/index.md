@@ -246,3 +246,74 @@ it.next(20)  // { value: 20, done: true }   — b = 20
 - `yield` 暂停执行，`next()` 恢复执行
 - `next(val)` 的参数作为上一个 `yield` 表达式的返回值
 - Generator + Promise 是 async/await 的前身
+
+## 面试题复盘：async/await 嵌套执行顺序
+
+### 题目
+
+```js
+async function a() {
+  console.log(1)
+  await b()
+  console.log(2)
+}
+
+async function b() {
+  console.log(3)
+  await c()
+  console.log(4)
+}
+
+async function c() {
+  console.log(5)
+}
+
+a()
+
+Promise.resolve()
+  .then(() => console.log(6))
+  .then(() => console.log(7))
+  .then(() => console.log(8))
+```
+
+### 输出
+
+```
+1 3 5 4 2 6 7 8
+```
+
+### 逐步推导
+
+```
+同步阶段：
+  a() 调用 → console.log(1) → 输出 1
+  await b() → 先同步调用 b()
+    b() 内部 → console.log(3) → 输出 3
+    await c() → 先同步调用 c()
+      c() 内部 → console.log(5) → 输出 5
+      c() 返回 undefined
+    b() 中 await undefined 让出，console.log(4) 入微任务队列
+  a() 中 await b() 让出，console.log(2) 入微任务队列
+  Promise.resolve().then(6) 入微任务队列
+
+微任务队列（按入队顺序）：
+  1. console.log(4)  → 输出 4
+  2. console.log(2)  → 输出 2
+  3. console.log(6)  → 输出 6
+     .then(7) 被 schedule → 输出 7
+     .then(8) 被 schedule → 输出 8
+```
+
+### 核心要点
+
+**`await fn()` 的两阶段执行**：
+1. 先**同步执行** `fn()` 函数体
+2. 再根据 `fn()` 的返回值决定是否让出执行权
+   - 返回 Promise/Pending：让出，后面的代码入微任务队列
+   - 返回非 thenable 值：包装成 Promise 后让出
+
+**常见误区**：
+- ❌ 以为 `await c()` 会等 `c()` 完全执行完（包括 await）再继续
+- ✅ 实际是 `c()` 同步执行完后立即返回，`b()` 中 `await` 让出，`b()` 剩余部分入微任务队列
+
+**记忆口诀**：`await fn()` = 同步调用 `fn()` + 让出执行权。`fn()` 内部的同步代码会立即执行。
