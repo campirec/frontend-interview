@@ -331,6 +331,200 @@ function createWebSocket(url) {
   return { send, on, close }
 }
 
+// ============================================
+// 题目 8：JWT 解码实现
+// ============================================
+
+/**
+ * 解码 JWT Token（仅解码，不验证签名）
+ * 注意：生产环境必须在服务端验证签名，前端解码仅用于读取信息
+ */
+function decodeJWT(token) {
+  const parts = token.split('.')
+  if (parts.length !== 3) {
+    throw new Error('Invalid JWT format')
+  }
+
+  // Base64Url → Base64 → 解码
+  function base64UrlDecode(str) {
+    // Base64Url 用 - 替换 +，用 _ 替换 /，去掉 = 填充
+    let base64 = str.replace(/-/g, '+').replace(/_/g, '/')
+    // 补齐 = 填充
+    const padding = base64.length % 4
+    if (padding) {
+      base64 += '='.repeat(4 - padding)
+    }
+    return JSON.parse(atob(base64))
+  }
+
+  const header = base64UrlDecode(parts[0])
+  const payload = base64UrlDecode(parts[1])
+
+  // 检查过期时间
+  const isExpired = payload.exp ? Date.now() / 1000 > payload.exp : false
+
+  return {
+    header,      // { alg, typ }
+    payload,     // { sub, name, iat, exp, ... }
+    isExpired,
+    expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
+  }
+}
+
+// 使用示例
+// const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+// console.log(decodeJWT(token))
+
+// ============================================
+// 题目 9：大文件分片上传
+// ============================================
+
+/**
+ * 大文件分片上传类
+ * 支持：分片上传、断点续传、进度回调、并发控制
+ */
+class FileUploader {
+  constructor(options = {}) {
+    this.chunkSize = options.chunkSize || 5 * 1024 * 1024  // 默认 5MB 一片
+    this.maxConcurrent = options.maxConcurrent || 3
+    this.uploadUrl = options.uploadUrl || '/upload'
+    this.mergeUrl = options.mergeUrl || '/merge'
+    this.checkUrl = options.checkUrl || '/check'
+    this.onProgress = options.onProgress || (() => {})
+  }
+
+  /**
+   * 计算文件 hash（简单版本，用文件名+大小+最后修改时间模拟）
+   * 生产环境应使用 spark-md5 或 hash-wasm 计算文件内容 hash
+   */
+  getFileHash(file) {
+    return `${file.name}-${file.size}-${file.lastModified}`
+  }
+
+  /**
+   * 创建文件分片
+   */
+  createFileChunks(file) {
+    const chunks = []
+    let cur = 0
+    let index = 0
+    while (cur < file.size) {
+      const chunk = file.slice(cur, cur + this.chunkSize)
+      chunks.push({ chunk, index, size: chunk.size })
+      cur += this.chunkSize
+      index++
+    }
+    return chunks
+  }
+
+  /**
+   * 检查已上传的分片（断点续传）
+   */
+  async checkUploaded(fileHash) {
+    try {
+      const res = await fetch(`${this.checkUrl}?hash=${fileHash}`)
+      const data = await res.json()
+      return data.uploadedChunks || []  // 返回已上传的分片索引数组
+    } catch {
+      return []  // 检查失败，从头开始上传
+    }
+  }
+
+  /**
+   * 上传单个分片
+   */
+  uploadChunk({ chunk, index }, fileHash) {
+    const formData = new FormData()
+    formData.append('chunk', chunk)
+    formData.append('hash', fileHash)
+    formData.append('index', index)
+
+    return fetch(this.uploadUrl, {
+      method: 'POST',
+      body: formData,
+    }).then(res => res.json())
+  }
+
+  /**
+   * 并发上传控制
+   */
+  async uploadChunks(chunks, fileHash, uploadedChunks) {
+    // 过滤已上传的分片
+    const pendingChunks = chunks.filter(
+      c => !uploadedChunks.includes(c.index)
+    )
+
+    let completed = uploadedChunks.length
+    const total = chunks.length
+
+    // 并发控制
+    const executing = new Set()
+
+    for (const chunkInfo of pendingChunks) {
+      const promise = this.uploadChunk(chunkInfo, fileHash)
+        .then(() => {
+          completed++
+          this.onProgress(completed, total, (completed / total * 100).toFixed(1))
+        })
+
+      executing.add(promise)
+      promise.finally(() => executing.delete(promise))
+
+      if (executing.size >= this.maxConcurrent) {
+        await Promise.race(executing)
+      }
+    }
+
+    await Promise.all(executing)
+  }
+
+  /**
+   * 通知服务端合并分片
+   */
+  async mergeChunks(fileHash, fileName, totalChunks) {
+    return fetch(this.mergeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: fileHash, name: fileName, total: totalChunks }),
+    }).then(res => res.json())
+  }
+
+  /**
+   * 完整上传流程
+   */
+  async upload(file) {
+    // 1. 计算文件标识
+    const fileHash = this.getFileHash(file)
+
+    // 2. 创建分片
+    const chunks = this.createFileChunks(file)
+
+    // 3. 检查已上传分片（断点续传）
+    const uploadedChunks = await this.checkUploaded(fileHash)
+
+    // 4. 上传剩余分片
+    await this.uploadChunks(chunks, fileHash, uploadedChunks)
+
+    // 5. 通知合并
+    const result = await this.mergeChunks(fileHash, file.name, chunks.length)
+
+    return result
+  }
+}
+
+// 使用示例
+// const uploader = new FileUploader({
+//   uploadUrl: '/api/upload/chunk',
+//   mergeUrl: '/api/upload/merge',
+//   checkUrl: '/api/upload/check',
+//   chunkSize: 2 * 1024 * 1024,  // 2MB 一片
+//   maxConcurrent: 3,
+//   onProgress: (done, total, percent) => {
+//     console.log(`上传进度：${done}/${total} (${percent}%)`)
+//   },
+// })
+// uploader.upload(fileInput.files[0]).then(res => console.log('上传完成', res))
+
 export {
   urlToPage,
   ajax,
@@ -340,4 +534,6 @@ export {
   storageComparison,
   jsonp,
   createWebSocket,
+  decodeJWT,
+  FileUploader,
 }

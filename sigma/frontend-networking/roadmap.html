@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>前端网络知识 - 学习路线图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle { text-align: center; color: #94a3b8; margin-bottom: 40px; }
+  .progress-bar-container {
+    background: #1e293b;
+    border-radius: 12px;
+    height: 24px;
+    margin-bottom: 40px;
+    overflow: hidden;
+    border: 1px solid #334155;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 12px;
+    transition: width 0.5s ease;
+    width: 17%;
+  }
+  .progress-text {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: -32px;
+    margin-bottom: 32px;
+  }
+  .node {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .node-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 16px 20px;
+    width: 100%;
+    transition: all 0.3s ease;
+  }
+  .node-content:hover {
+    border-color: #475569;
+    transform: translateX(4px);
+  }
+  .node-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .node-info { flex: 1; }
+  .node-title { font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
+  .node-desc { font-size: 0.85rem; color: #94a3b8; }
+  .node-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .node-score {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    min-width: 36px;
+    text-align: right;
+  }
+  .status-not-started .node-num { background: #334155; color: #64748b; }
+  .status-not-started .node-status { background: #1e293b; color: #64748b; border: 1px solid #334155; }
+  .status-in-progress .node-num { background: #1e3a5f; color: #60a5fa; }
+  .status-in-progress .node-status { background: #1e3a5f; color: #60a5fa; border: 1px solid #2563eb; }
+  .status-in-progress .node-content { border-color: #2563eb; box-shadow: 0 0 20px rgba(37, 99, 235, 0.15); }
+  .status-mastered .node-num { background: #064e3b; color: #34d399; }
+  .status-mastered .node-status { background: #064e3b; color: #34d399; border: 1px solid #059669; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(96, 165, 250, 0); }
+  }
+  .current .node-num { animation: pulse 2s infinite; }
+  .arrow {
+    width: 2px;
+    height: 12px;
+    background: #334155;
+    margin-left: 38px;
+  }
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    color: #475569;
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🌐 前端网络知识</h1>
+  <p class="subtitle">Sigma 个性化学习路线图</p>
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <p class="progress-text" id="progressText">2 / 12 概念已掌握 (17%)</p>
+  <div id="roadmap"></div>
+  <div class="footer">
+    <p>最后更新: 2026-03-29 | Sigma Tutor</p>
+  </div>
+</div>
+<script>
+const concepts = [
+  { id: 1, title: '网络分层模型', desc: 'TCP/IP 五层模型，理解为什么网络要分层', status: 'mastered', score: 85 },
+  { id: 2, title: 'TCP 连接机制', desc: '三次握手、四次挥手、TCP vs UDP', status: 'mastered', score: 80 },
+  { id: 3, title: 'DNS 域名解析', desc: '域名到 IP 的解析流程、递归与迭代查询', status: 'in-progress', score: 0 },
+  { id: 4, title: 'HTTP 请求与响应', desc: 'HTTP 方法、状态码、请求头/响应头', status: 'not-started', score: 0 },
+  { id: 5, title: 'HTTP 协议演进', desc: 'HTTP/1.1 → HTTP/2 多路复用 → HTTP/3 QUIC', status: 'not-started', score: 0 },
+  { id: 6, title: 'HTTPS 与 TLS', desc: 'TLS 握手、证书验证、加密原理', status: 'not-started', score: 0 },
+  { id: 7, title: '浏览器缓存策略', desc: '强缓存、协商缓存、Cache-Control、ETag', status: 'not-started', score: 0 },
+  { id: 8, title: 'URL 到页面的完整旅程', desc: '🔗 综合概念：串联所有网络环节', status: 'not-started', score: 0 },
+  { id: 9, title: '同源策略与跨域', desc: 'SOP、CORS 预检、JSONP、代理方案', status: 'not-started', score: 0 },
+  { id: 10, title: 'Cookie 与认证', desc: 'Cookie 属性、Session、JWT Token', status: 'not-started', score: 0 },
+  { id: 11, title: '浏览器渲染流水线', desc: 'DOM 树、CSSOM、布局、绘制、合成', status: 'not-started', score: 0 },
+  { id: 12, title: '前端网络性能优化', desc: 'Core Web Vitals、资源加载、传输与渲染优化', status: 'not-started', score: 0 },
+];
+const statusLabels = {
+  'not-started': '未开始',
+  'in-progress': '学习中',
+  'mastered': '已掌握',
+  'skipped': '已跳过'
+};
+function renderRoadmap() {
+  const container = document.getElementById('roadmap');
+  const mastered = concepts.filter(c => c.status === 'mastered').length;
+  const pct = Math.round((mastered / concepts.length) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${mastered} / ${concepts.length} 概念已掌握 (${pct}%)`;
+  const currentConcept = concepts.find(c => c.status === 'in-progress');
+  container.innerHTML = concepts.map((c, i) => {
+    const isCurrent = currentConcept && c.id === currentConcept.id;
+    const scoreText = c.score > 0 ? c.score + '%' : '';
+    return `
+      ${i > 0 ? '<div class="arrow"></div>' : ''}
+      <div class="node">
+        <div class="node-content status-${c.status} ${isCurrent ? 'current' : ''}">
+          <div class="node-num">${c.id}</div>
+          <div class="node-info">
+            <div class="node-title">${c.title}</div>
+            <div class="node-desc">${c.desc}</div>
+          </div>
+          <div class="node-score">${scoreText}</div>
+          <div class="node-status">${statusLabels[c.status]}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+renderRoadmap();
+</script>
+</body>
+</html>

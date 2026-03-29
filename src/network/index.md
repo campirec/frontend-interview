@@ -1,5 +1,148 @@
 # 网络与浏览器
 
+## TCP/IP 五层网络模型
+
+互联网通信的基础架构分为五层，每层负责不同的职责，数据从应用层逐层封装到底层发送，接收端逐层解封。
+
+```
+┌──────────────────────────────────────────────────────┐
+│  应用层 (Application)                                  │
+│  HTTP / HTTPS / DNS / WebSocket / FTP / SMTP          │
+│  职责：为应用程序提供网络服务接口                         │
+├──────────────────────────────────────────────────────┤
+│  传输层 (Transport)                                    │
+│  TCP（可靠传输）/ UDP（快速传输）                        │
+│  职责：端到端通信、流量控制、拥塞控制                     │
+├──────────────────────────────────────────────────────┤
+│  网络层 (Network)                                      │
+│  IP / ICMP / ARP                                       │
+│  职责：路由寻址、分组转发（IP 地址）                      │
+├──────────────────────────────────────────────────────┤
+│  数据链路层 (Data Link)                                │
+│  Ethernet / WiFi / PPP                                 │
+│  职责：相邻节点间的帧传输（MAC 地址）                     │
+├──────────────────────────────────────────────────────┤
+│  物理层 (Physical)                                     │
+│  光纤 / 网线 / 无线电波                                 │
+│  职责：比特流的物理传输                                  │
+└──────────────────────────────────────────────────────┘
+```
+
+### 数据封装过程
+
+```
+应用数据
+  → [应用层] 添加 HTTP 请求头/响应头
+  → [传输层] 添加 TCP 头（源端口、目的端口、序列号、校验和）
+  → [网络层] 添加 IP 头（源 IP、目的 IP、TTL）
+  → [数据链路层] 添加以太网帧头（源 MAC、目的 MAC）
+  → [物理层] 转为电信号/光信号传输
+```
+
+### TCP vs UDP
+
+| 特性 | TCP | UDP |
+|------|-----|-----|
+| 连接 | 三次握手建立连接 | 无连接 |
+| 可靠性 | 可靠（重传、确认、排序） | 不可靠（尽最大努力交付） |
+| 速度 | 较慢（需握手、拥塞控制） | 快速（无额外开销） |
+| 适用场景 | 网页、API、文件传输 | 视频直播、DNS 查询、游戏 |
+
+### TCP 三次握手
+
+```
+Client                          Server
+  │── SYN（seq=x）────────────→│  "我想建立连接"
+  │←── SYN+ACK（seq=y,ack=x+1）│  "收到，我也准备好了"
+  │── ACK（ack=y+1）──────────→│  "确认，开始传输"
+  │    可靠传输开始              │
+```
+
+### TCP 四次挥手
+
+```
+Client                          Server
+  │── FIN─────────────────────→│  "我没有数据要发了"
+  │←── ACK────────────────────│  "收到"
+  │←── FIN────────────────────│  "我也没有数据要发了"
+  │── ACK─────────────────────→│  "收到，关闭连接"
+  │    等待 2MSL 后彻底关闭      │
+```
+
+### 与 OSI 七层模型对应关系
+
+```
+OSI 七层              TCP/IP 五层         对应协议
+─────────────────────────────────────────────
+应用层 ─┐
+表示层 ─┼→ 应用层          HTTP/HTTPS/DNS/WebSocket
+会话层 ─┘
+传输层    → 传输层          TCP/UDP
+网络层    → 网络层          IP/ICMP
+数据链路层 → 数据链路层      Ethernet/WiFi
+物理层    → 物理层          光纤/网线
+```
+
+## DNS 域名系统
+
+### DNS 解析流程
+
+```
+浏览器输入 www.example.com
+  → 浏览器 DNS 缓存（chrome://net-internals/#dns）
+  → 操作系统 DNS 缓存
+  → hosts 文件
+  → 本地 DNS 服务器（递归查询）
+    → 根域名服务器（.）
+    → 顶级域名服务器（.com）
+    → 权威域名服务器（example.com）
+    → 返回 IP 地址
+```
+
+### DNS 记录类型
+
+| 类型 | 作用 | 示例 |
+|------|------|------|
+| A | 域名 → IPv4 地址 | `example.com → 93.184.216.34` |
+| AAAA | 域名 → IPv6 地址 | `example.com → 2606:2800:220:1:...` |
+| CNAME | 域名别名 | `www.example.com → example.com` |
+| MX | 邮件服务器 | `example.com → mail.example.com` |
+| TXT | 文本记录（SPF、验证） | `v=spf1 include:_spf.google.com` |
+| NS | 域名服务器 | `example.com → ns1.example.com` |
+
+### 递归查询 vs 迭代查询
+
+```
+递归查询（客户端 → 本地 DNS）：
+  客户端问本地 DNS "www.example.com 的 IP 是什么？"
+  本地 DNS 负责一路查到底，最终返回结果
+
+迭代查询（本地 DNS → 各级服务器）：
+  本地 DNS 问根服务器 → "去找 .com 服务器"
+  本地 DNS 问 .com 服务器 → "去找 example.com 服务器"
+  本地 DNS 问权威服务器 → 得到 IP
+```
+
+### DNS 优化
+
+```html
+<!-- DNS 预解析：提前解析域名 -->
+<link rel="dns-prefetch" href="//cdn.example.com">
+
+<!-- 预建立连接（DNS + TCP + TLS） -->
+<link rel="preconnect" href="https://cdn.example.com">
+
+<!-- 预加载资源（优先级高） -->
+<link rel="preload" href="/critical.js" as="script">
+
+<!-- 预获取资源（优先级低，空闲时加载） -->
+<link rel="prefetch" href="/next-page.js" as="script">
+```
+
+### DNS 负载均衡
+
+DNS 可以为同一个域名返回多个 IP 地址，客户端通常选择第一个。DNS 服务器通过轮转顺序实现简单的负载均衡，CDN 还可基于 GEO DNS 返回距离用户最近节点的 IP。
+
 ## HTTP 协议演进
 
 ### HTTP/1.1
@@ -156,3 +299,252 @@ Access-Control-Max-Age: 86400  # 预检缓存时间
 - **JSONP** — 仅支持 GET，利用 `<script>` 标签不受同源限制
 - **WebSocket** — 不受同源策略限制
 - **postMessage** — 跨窗口通信
+
+## JWT 令牌认证
+
+### JWT 结构
+
+JWT（JSON Web Token）由三部分组成，用 `.` 分隔：
+
+```
+xxxxx.yyyyy.zzzzz
+ │     │     │
+ │     │     └── Signature（签名）
+ │     └──────── Payload（载荷）
+ └────────────── Header（头部）
+```
+
+### Header（头部）
+
+```json
+{
+  "alg": "HS256",    // 签名算法：HS256（对称）/ RS256（非对称）
+  "typ": "JWT"
+}
+// Base64Url 编码后作为第一部分
+```
+
+### Payload（载荷）
+
+```json
+{
+  "sub": "1234567890",   // 主题（用户 ID）
+  "name": "John Doe",
+  "iat": 1516239022,     // 签发时间 (Issued At)
+  "exp": 1516242622      // 过期时间 (Expiration)
+}
+// Base64Url 编码后作为第二部分
+// ⚠️ 默认不加密，不要存放敏感信息！
+```
+
+### Signature（签名）
+
+```
+HMACSHA256(
+  base64UrlEncode(header) + "." + base64UrlEncode(payload),
+  secret    // 服务端密钥，不能泄露
+)
+```
+
+### 认证流程
+
+```
+1. 用户登录（账号密码）
+2. 服务端验证 → 生成 JWT → 返回给前端
+3. 前端存储 JWT（localStorage / Cookie）
+4. 后续请求携带 Authorization: Bearer <token>
+5. 服务端验证签名 + 检查过期 → 返回数据
+```
+
+### JWT vs Session vs Cookie
+
+| 特性 | JWT | Session + Cookie |
+|------|-----|-----------------|
+| 存储位置 | 客户端 | 服务端 |
+| 扩展性 | 无状态，天然支持分布式 | 需要共享 Session（Redis） |
+| 安全性 | 无法主动失效（除非黑名单） | 服务端可随时销毁 |
+| 跨域 | 天然支持 | 需要额外配置 CORS |
+| 适用场景 | API 认证、微服务、移动端 | 传统 Web 应用、SSO |
+
+### 安全实践
+
+```
+1. 存储选择
+   - localStorage：易受 XSS 攻击窃取
+   - HttpOnly Cookie：XSS 无法读取，但需防御 CSRF
+   - 推荐：HttpOnly + Secure + SameSite Cookie
+
+2. 过期策略
+   - Access Token：短过期（15-30 分钟）
+   - Refresh Token：长过期（7-30 天），用于续签
+
+3. 其他
+   - 使用 HTTPS 传输
+   - 不在 Payload 中存放敏感信息（Base64 可解码）
+   - 服务端验证签名 + 检查 exp/nbf
+```
+
+## 文件上传与下载
+
+### 文件上传
+
+**基本表单上传（multipart/form-data）**
+
+```html
+<form enctype="multipart/form-data" method="POST" action="/upload">
+  <input type="file" name="file" />
+  <button>上传</button>
+</form>
+```
+
+```js
+// Fetch 上传
+const formData = new FormData()
+formData.append('file', fileInput.files[0])
+formData.append('name', 'document.pdf')
+
+fetch('/upload', {
+  method: 'POST',
+  body: formData,  // 不要手动设置 Content-Type，浏览器自动加 boundary
+})
+```
+
+**大文件分片上传**
+
+```
+1. 前端分片
+   file.slice(0, CHUNK_SIZE)       // 第 1 片
+   file.slice(CHUNK_SIZE, 2*SIZE)  // 第 2 片
+   ...
+
+2. 计算文件 hash（用于标识同一文件）
+   - 使用 spark-md5 对分片逐片计算
+   - 或使用 Web Worker 避免阻塞主线程
+
+3. 并发上传分片
+   - 每个分片独立上传，支持并行
+   - 携带 hash + 分片索引
+
+4. 通知服务端合并
+   - 全部分片上传完成后，请求 /merge 接口
+   - 服务端按索引顺序合并为完整文件
+```
+
+**断点续传与秒传**
+
+```
+断点续传：
+  1. 上传前先请求 /check 接口，传入文件 hash
+  2. 服务端返回已上传的分片列表
+  3. 前端跳过已上传的分片，只上传剩余部分
+
+秒传：
+  1. 上传前请求 /check 接口，传入文件 hash
+  2. 服务端发现已有完整文件 → 直接返回成功
+  3. 前端无需上传任何分片
+```
+
+### 文件下载
+
+**方式一：`<a>` 标签 download 属性（同源 URL）**
+```js
+const link = document.createElement('a')
+link.href = '/files/report.pdf'
+link.download = 'report.pdf'
+link.click()
+```
+
+**方式二：Blob 下载（适合前端生成内容）**
+```js
+const blob = new Blob(['Hello World'], { type: 'text/plain' })
+const url = URL.createObjectURL(blob)
+const link = document.createElement('a')
+link.href = url
+link.download = 'hello.txt'
+link.click()
+URL.revokeObjectURL(url)  // 释放内存
+```
+
+**方式三：Fetch + Stream 下载（大文件/进度显示）**
+```js
+async function downloadWithProgress(url) {
+  const response = await fetch(url)
+  const contentLength = response.headers.get('Content-Length')
+  const reader = response.body.getReader()
+
+  let received = 0
+  const chunks = []
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+    received += value.length
+    console.log(`进度：${(received / contentLength * 100).toFixed(1)}%`)
+  }
+
+  const blob = new Blob(chunks)
+  // 触发下载...
+}
+```
+
+### Postman / Apifox 调试工具
+
+API 调试工具用于模拟 HTTP 请求，前后端联调时必备：
+
+```
+核心功能：
+  - 支持所有 HTTP 方法（GET/POST/PUT/DELETE...）
+  - 设置请求头、请求体、Query 参数
+  - 环境变量管理（开发/测试/生产环境切换）
+  - 请求历史记录与集合管理
+  - 自动生成代码片段（cURL、Fetch、Axios）
+  - Mock Server（前后端并行开发）
+
+Postman vs Apifox：
+  - Postman：老牌工具，插件生态丰富，国际主流
+  - Apifox：国产工具，集 API 设计 + 调试 + Mock + 文档于一体，中文友好
+```
+
+## 网络性能优化
+
+### 资源加载优化
+
+```
+1. 压缩
+   - Gzip / Brotli 压缩（服务端配置，通常压缩比 60-80%）
+   - 图片压缩（WebP/AVIF 格式、响应式图片 srcset）
+
+2. CDN（内容分发网络）
+   - 静态资源部署到 CDN，用户就近访问
+   - HTML 不走 CDN（避免缓存不一致）
+
+3. 资源预加载
+   - dns-prefetch：DNS 预解析
+   - preconnect：预建立连接
+   - preload：预加载关键资源
+   - prefetch：空闲时预获取
+
+4. 代码分割（Code Splitting）
+   - 路由级别懒加载
+   - 动态 import() 按需加载
+   - Vite/Webpack 自动分割
+```
+
+### 传输优化
+
+```
+1. HTTP/2 多路复用 — 减少连接数
+2. 合并请求 — 雪碧图、内联小资源
+3. 懒加载 — 图片/组件进入视口再加载（Intersection Observer）
+4. Service Worker — 离线缓存、请求拦截
+```
+
+### 渲染优化
+
+```
+1. CSS 放 <head>，JS 放 </body> 前（或 defer/async）
+2. 避免布局抖动（读写分离）
+3. 虚拟列表（大数据量列表渲染）
+4. Web Worker 处理耗时计算
+```
