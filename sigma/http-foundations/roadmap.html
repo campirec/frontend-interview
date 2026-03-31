@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTTP Learning Roadmap</title>
+    <style>
+      :root {
+        --bg: #08080c;
+        --surface: rgba(255, 255, 255, 0.04);
+        --surface-hover: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #ededef;
+        --text-secondary: rgba(255, 255, 255, 0.66);
+        --text-tertiary: rgba(255, 255, 255, 0.38);
+        --accent-1: #06b6d4;
+        --accent-2: #34d399;
+        --accent-gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+        --green: #34d399;
+        --amber: #fbbf24;
+        --red: #f87171;
+        --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+        --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --radius: 18px;
+        --mastered-pct: 3%;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: var(--font-sans);
+        background:
+          radial-gradient(circle at 15% 20%, rgba(6, 182, 212, 0.18), transparent 28%),
+          radial-gradient(circle at 82% 18%, rgba(52, 211, 153, 0.16), transparent 24%),
+          radial-gradient(circle at 52% 88%, rgba(245, 158, 11, 0.12), transparent 30%),
+          var(--bg);
+      }
+
+      .shell {
+        width: min(920px, calc(100vw - 32px));
+        margin: 32px auto;
+        padding: 28px;
+      }
+
+      .panel,
+      .node {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+      }
+
+      .panel {
+        padding: 28px;
+      }
+
+      .header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 180px;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        color: var(--text-secondary);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-size: 12px;
+      }
+
+      h1 {
+        margin: 12px 0 10px;
+        font-size: clamp(32px, 5vw, 52px);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+      }
+
+      .gradient {
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .subtitle {
+        margin: 0;
+        max-width: 56ch;
+        color: var(--text-secondary);
+        line-height: 1.65;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .chip {
+        padding: 9px 12px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+
+      .ring-card {
+        display: grid;
+        place-items: center;
+        gap: 10px;
+        padding: 18px;
+        text-align: center;
+      }
+
+      .ring-wrap {
+        position: relative;
+        width: 130px;
+        height: 130px;
+      }
+
+      .ring-wrap svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+
+      .ring-bg,
+      .ring-progress {
+        fill: none;
+        stroke-width: 10;
+      }
+
+      .ring-bg {
+        stroke: rgba(255, 255, 255, 0.08);
+      }
+
+      .ring-progress {
+        stroke: url(#gradient);
+        stroke-linecap: round;
+        stroke-dasharray: 339.292;
+        stroke-dashoffset: 328.113;
+      }
+
+      .ring-label {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+      }
+
+      .ring-label strong {
+        display: block;
+        font-size: 34px;
+        letter-spacing: -0.05em;
+      }
+
+      .ring-label span {
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+
+      .meta {
+        color: var(--text-tertiary);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .timeline {
+        position: relative;
+        margin-top: 26px;
+        padding-left: 26px;
+      }
+
+      .timeline::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        bottom: 10px;
+        left: 7px;
+        width: 2px;
+        background:
+          linear-gradient(
+            to bottom,
+            var(--green) 0%,
+            var(--accent-1) var(--mastered-pct),
+            rgba(255, 255, 255, 0.14) var(--mastered-pct),
+            rgba(255, 255, 255, 0.08) 100%
+          );
+      }
+
+      .node-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .node {
+        padding: 18px 20px 18px 22px;
+        transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1), border-color 220ms cubic-bezier(0.4, 0, 0.2, 1), background 220ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .node:hover {
+        transform: translateY(-2px);
+        background: var(--surface-hover);
+      }
+
+      .node::before {
+        content: "";
+        position: absolute;
+        left: -21px;
+        top: 26px;
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        border: 2px solid var(--border);
+        background: #11131a;
+        box-shadow: 0 0 0 5px rgba(8, 8, 12, 0.95);
+      }
+
+      .node.mastered {
+        border-color: rgba(52, 211, 153, 0.35);
+      }
+
+      .node.mastered::before {
+        background: var(--green);
+        border-color: rgba(52, 211, 153, 0.45);
+      }
+
+      .node.current {
+        border-color: rgba(6, 182, 212, 0.38);
+        box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.2), 0 18px 60px rgba(0, 0, 0, 0.28);
+      }
+
+      .node.current::before {
+        background: var(--accent-1);
+        border-color: rgba(6, 182, 212, 0.5);
+        animation: pulse 1.8s infinite;
+      }
+
+      .node.upcoming {
+        opacity: 0.62;
+      }
+
+      .node-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .node-title {
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: -0.03em;
+      }
+
+      .node-subtitle {
+        margin: 6px 0 0;
+        color: var(--text-secondary);
+        line-height: 1.55;
+        font-size: 14px;
+      }
+
+      .badge {
+        flex-shrink: 0;
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 1px solid var(--border);
+      }
+
+      .badge.mastered {
+        color: var(--green);
+        border-color: rgba(52, 211, 153, 0.24);
+        background: rgba(52, 211, 153, 0.08);
+      }
+
+      .badge.current {
+        color: var(--accent-1);
+        border-color: rgba(6, 182, 212, 0.22);
+        background: rgba(6, 182, 212, 0.08);
+      }
+
+      .badge.upcoming {
+        color: var(--text-secondary);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 14px;
+        color: var(--text-tertiary);
+        font-size: 13px;
+      }
+
+      .progress {
+        margin-top: 12px;
+        height: 7px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .progress > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent-gradient);
+      }
+
+      .footer {
+        display: grid;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .footer-line {
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+
+      .footer-line > span {
+        display: block;
+        width: 3%;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent-gradient);
+      }
+
+      .footer-text {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.45);
+        }
+        50% {
+          box-shadow: 0 0 0 12px rgba(6, 182, 212, 0);
+        }
+      }
+
+      @media (max-width: 720px) {
+        .shell {
+          width: min(100vw - 20px, 920px);
+          margin: 18px auto;
+          padding: 14px;
+        }
+
+        .panel {
+          padding: 20px;
+        }
+
+        .header {
+          grid-template-columns: 1fr;
+        }
+
+        .ring-card {
+          justify-items: start;
+          text-align: left;
+        }
+
+        .meta-row,
+        .footer-text,
+        .node-head {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 32px;
+        }
+
+        .timeline {
+          padding-left: 20px;
+        }
+
+        .node {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+      <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="var(--accent-1)"></stop>
+          <stop offset="100%" stop-color="var(--accent-2)"></stop>
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <main class="shell">
+      <section class="panel">
+        <div class="header">
+          <div>
+            <div class="eyebrow">Sigma Tutor Session</div>
+            <h1><span class="gradient">HTTP 从 0 到 1</span></h1>
+            <p class="subtitle">
+              先把 HTTP 放回整个网络通信链路里，再逐步进入 URL、连接建立、报文结构、状态管理、缓存和协议演进。
+            </p>
+            <div class="chips">
+              <div class="chip">Level: beginner</div>
+              <div class="chip">Language: zh-CN</div>
+              <div class="chip">Current: HTTP 在网络中的位置与职责</div>
+            </div>
+          </div>
+
+          <div class="panel ring-card">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
+                <circle class="ring-progress" cx="60" cy="60" r="54"></circle>
+              </svg>
+              <div class="ring-label">
+                <div>
+                  <strong>3%</strong>
+                  <span>overall progress</span>
+                </div>
+              </div>
+            </div>
+            <div class="meta">11 concepts in path</div>
+          </div>
+        </div>
+
+        <section class="timeline">
+          <div class="node-list">
+            <article class="node current">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">1. HTTP 在网络中的位置与职责</h2>
+                  <p class="node-subtitle">先辨认 HTTP 解决什么问题，它为什么属于应用层，以及它和 TCP、TLS、浏览器渲染分别是什么关系。</p>
+                </div>
+                <span class="badge current">In Progress</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: -</span>
+                <span>Score: 35%</span>
+              </div>
+              <div class="progress"><span style="width:35%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">2. URL 结构与资源定位</h2>
+                  <p class="node-subtitle">拆开协议、主机、端口、路径、查询参数与片段，搞清浏览器到底在定位什么资源。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 1</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">3. DNS、TCP、TLS 与连接建立</h2>
+                  <p class="node-subtitle">把“找到服务器”拆成域名解析、建立 TCP 连接，以及 HTTPS 场景下的 TLS 握手。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 1, 2</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">4. HTTP 请求报文</h2>
+                  <p class="node-subtitle">理解 request line、headers、body，知道浏览器发出去的请求到底长什么样。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 1, 2, 3</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">5. HTTP 响应报文与状态码</h2>
+                  <p class="node-subtitle">理解 status line、headers、body，以及 2xx / 3xx / 4xx / 5xx 的语义边界。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 4</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">6. 请求方法、幂等性与安全性</h2>
+                  <p class="node-subtitle">分清 GET、POST、PUT、DELETE 等方法的意图，以及 safe / idempotent 的设计含义。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 4, 5</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">7. 常见 Header 与内容协商</h2>
+                  <p class="node-subtitle">认识 Content-Type、Accept、Authorization、Cache-Control 等头的作用与搭配方式。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 4, 5, 6</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">8. Cookie、Session 与 HTTP 无状态</h2>
+                  <p class="node-subtitle">理解为什么 HTTP 天然无状态，以及浏览器和服务端如何在此基础上维持登录态。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 4, 5, 7</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">9. 缓存：强缓存与协商缓存</h2>
+                  <p class="node-subtitle">把缓存命中路径、Cache-Control、ETag、Last-Modified 放进完整请求流程里理解。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 5, 7</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">10. HTTPS 与 TLS 基础</h2>
+                  <p class="node-subtitle">分清“HTTP 是应用协议”和“TLS 提供加密通道”，理解证书与握手是怎么接起来的。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 3, 4, 5</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+
+            <article class="node upcoming">
+              <div class="node-head">
+                <div>
+                  <h2 class="node-title">11. HTTP/1.1、HTTP/2、HTTP/3 演进</h2>
+                  <p class="node-subtitle">从队头阻塞、头部压缩、多路复用到 QUIC，理解协议演进究竟在解决什么痛点。</p>
+                </div>
+                <span class="badge upcoming">Not Started</span>
+              </div>
+              <div class="meta-row">
+                <span>Prerequisites: 3, 4, 7, 10</span>
+                <span>Score: -</span>
+              </div>
+              <div class="progress"><span style="width:0%"></span></div>
+            </article>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <div class="footer-text">
+            <span>0 / 11 concepts mastered</span>
+            <span>Current phase: diagnosis + concept 1</span>
+          </div>
+          <div class="footer-line"><span></span></div>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>

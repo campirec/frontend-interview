@@ -1,9 +1,10 @@
 # Session: 前端网络知识
 
 ## Learner Profile
-- Level: beginner（有前端项目经验，网络基础薄弱）
+- Level: beginner → intermediate
 - Language: zh
 - Started: 2026-03-28
+- Completed: 2026-03-31
 
 ## Concept Map
 | # | Concept | Prerequisites | Status | Score | Last Reviewed | Review Interval |
@@ -12,14 +13,14 @@
 | 2 | TCP 连接机制 | 1 | mastered | 80% | 2026-03-29 | 1d |
 | 3 | DNS 域名解析 | 1 | mastered | 82% | 2026-03-29 | 1d |
 | 4 | HTTP 请求与响应 | 1 | mastered | 82% | 2026-03-29 | 1d |
-| 5 | HTTP 协议演进 | 4 | in-progress | 0% | - | - |
-| 6 | HTTPS 与 TLS | 4 | not-started | - | - | - |
-| 7 | 浏览器缓存策略 | 4, 5 | not-started | - | - | - |
-| 8 | URL 到页面的完整旅程 | 1-7 | not-started | - | - | - |
-| 9 | 同源策略与跨域 | 4 | not-started | - | - | - |
-| 10 | Cookie 与认证 | 4, 6 | not-started | - | - | - |
-| 11 | 浏览器渲染流水线 | 8 | not-started | - | - | - |
-| 12 | 前端网络性能优化 | 全部 | not-started | - | - | - |
+| 5 | HTTP 协议演进 | 4 | mastered | 78% | 2026-03-31 | 1d |
+| 6 | HTTPS 与 TLS | 4 | mastered | 82% | 2026-03-31 | 1d |
+| 7 | 浏览器缓存策略 | 4, 5 | mastered | 85% | 2026-03-31 | 1d |
+| 8 | URL 到页面的完整旅程 | 1-7 | mastered | 80% | 2026-03-31 | 1d |
+| 9 | 同源策略与跨域 | 4 | mastered | 85% | 2026-03-31 | 1d |
+| 10 | Cookie 与认证 | 4, 6 | mastered | 82% | 2026-03-31 | 1d |
+| 11 | 浏览器渲染流水线 | 8 | mastered | 82% | 2026-03-31 | 1d |
+| 12 | 前端网络性能优化 | 全部 | mastered | 85% | 2026-03-31 | 1d |
 
 ## Misconceptions
 | # | Concept | Misconception | Root Cause | Status | Counter-Example Used |
@@ -34,4 +35,13 @@
 - [2026-03-28] 概念 1 网络分层模型：mastered（85%）
 - [2026-03-29] 概念 2 TCP 连接机制：mastered（80%）
 - [2026-03-29] 概念 3 DNS 域名解析：mastered（82%）
-- [2026-03-29] 概念 4 HTTP 请求与响应：mastered（82%）— 理解 GET/POST 区别（幂等性+参数位置）、状态码分类、请求头作用，能通过状态码定位问题所在层。实践任务中 401/403 细节经提醒已理解
+- [2026-03-29] 概念 4 HTTP 请求与响应：mastered（82%）
+- [2026-03-31] 概念 5 HTTP 协议演进：mastered（78%）
+- [2026-03-31] 概念 6 HTTPS 与 TLS：mastered（82%）
+- [2026-03-31] 概念 7 浏览器缓存策略：mastered（85%）
+- [2026-03-31] 概念 8 URL 到页面的完整旅程：mastered（80%）
+- [2026-03-31] 概念 9 同源策略与跨域：mastered（85%）
+- [2026-03-31] 概念 10 Cookie 与认证：mastered（82%）
+- [2026-03-31] 概念 11 浏览器渲染流水线：mastered（82%）
+- [2026-03-31] 概念 12 前端网络性能优化：mastered（85%）
+- [2026-03-31] 🎉 全部 12 个概念已掌握！

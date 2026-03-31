@@ -1,0 +1,2 @@
+- [Learner Profile](learner-profile.md) — 跨主题学习者模型：有前端项目经验，网络知识初学者，倾向低估自己水平
+- [Session: Frontend Networking](frontend-networking/session.md) — 前端网络知识 12/12 概念全部掌握，2026-03-28 ~ 2026-03-31
